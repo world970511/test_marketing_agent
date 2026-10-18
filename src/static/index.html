@@ -1,0 +1,138 @@
+<!doctype html>
+<!--
+  대시보드 화면(뼈대). 서버(src/app.py)가 이 파일을 그대로 내려주고,
+  동작은 app.js, 모양은 style.css 가 맡는다. 빌드 도구나 외부 CDN 은 쓰지 않는다.
+
+  화면은 세 칸이다.
+    1) 영상 불러오기  : 우리 채널 목록, 링크 직접 입력
+    2) 영상 선택      : 영상 목록 → (선택하면) 영상 카드 · 요약 · AI 댓글 초안
+    3) 댓글 달기      : 크롬 프로필 선택, 게시, 진행 상태
+  그리고 [댓글 기록 확인] 버튼으로 여는 기록 모달이 있다.
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>운명원 댓글 에이전트</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 상단: 제목, 오늘 게시 수(하루 상한 대비), 기록 모달 열기 버튼 -->
+  <header class="top">
+    <div>
+      <h1>운명원 댓글 에이전트</h1>
+      <p class="sub">우리 채널 영상을 불러와 댓글 초안을 확인하고, 크롬 프로필로 직접 게시합니다.</p>
+    </div>
+    <div class="topright">
+      <div class="quota" title="하루 게시 상한">
+        오늘 게시 <strong id="quotaUsed">0</strong> / <span id="quotaMax">10</span>
+      </div>
+      <button id="logBtn" class="btn" type="button">댓글 기록 확인</button>
+    </div>
+  </header>
+
+  <!-- 서버 없이 화면만 열었을 때(app.js 가 미리보기 데이터로 전환) 보이는 안내 -->
+  <div id="modeBanner" class="banner" hidden>
+    서버에 연결되지 않아 <strong>미리보기 데이터</strong>로 표시 중입니다. (UI 확인용)
+  </div>
+
+  <main class="steps">
+    <!-- ① 영상 불러오기: 채널 목록을 불러오고, 채널을 눌러 그 채널의 최신 영상을 본다 -->
+    <section class="card" id="step1">
+      <h2><span class="num">1</span>영상 불러오기</h2>
+      <button id="loadBtn" class="btn primary wide">영상 불러오기</button>
+      <p id="loadMsg" class="muted small"></p>
+
+      <!-- app.js 가 채널 버튼들을 채워 넣는다 -->
+      <ul id="channelList" class="channels" aria-label="채널 목록"></ul>
+
+      <!-- (가점) 링크로 직접 입력. 서버가 허용 채널인지 확인한 뒤 통과한 영상만 받는다 -->
+      <details class="linkbox">
+        <summary>링크로 직접 입력</summary>
+        <form id="linkForm">
+          <input id="linkInput" type="url" placeholder="https://youtu.be/..." autocomplete="off">
+          <button class="btn" type="submit">확인</button>
+        </form>
+        <p id="linkMsg" class="small"></p>
+      </details>
+    </section>
+
+    <!-- ② 영상 선택: 목록 화면(listView)과 상세 화면(detailView)이 번갈아 보인다 -->
+    <section class="card" id="step2">
+      <h2><span class="num">2</span><span id="step2Title">영상 선택</span></h2>
+
+      <!-- 목록 화면: 영상을 고르면 사라지고 상세 화면으로 바뀐다 -->
+      <div id="listView">
+        <p id="listEmpty" class="empty">왼쪽에서 영상을 불러오고 채널을 선택하세요.</p>
+        <ul id="videoList" class="videos" aria-label="영상 목록"></ul>
+      </div>
+
+      <!-- 상세 화면: 영상 카드 → 영상 요약 → AI 댓글 초안 → 편집 버튼들 -->
+      <div id="detailView" hidden>
+        <button id="backBtn" class="btn small" type="button">← 영상 목록</button>
+
+        <div id="videoCard" class="vcard"></div>
+
+        <div class="block">
+          <span class="label">영상 요약</span>
+          <p id="summaryText" class="summary"></p>
+          <p class="worry"><span class="label">연애 고민 한 줄</span><span id="worryText"></span></p>
+        </div>
+
+        <div class="block">
+          <label class="label" for="commentText">댓글 초안 <span class="badge">AI 작성</span></label>
+          <!-- 평소에는 읽기 전용. [직접 편집]을 눌러야 손으로 고칠 수 있다 -->
+          <textarea id="commentText" rows="5" spellcheck="false" readonly></textarea>
+          <div class="count-row">
+            <span id="countText" class="count">0자</span>
+            <span id="ruleText" class="small muted">40 ~ 120자 · 링크/해시태그 금지</span>
+          </div>
+
+          <!-- 직접 편집: 초안 글을 손으로 고친다 (수정 요청 줄과 같은 너비·높이) -->
+          <button id="editBtn" class="btn primary field" type="button">직접 편집</button>
+
+          <!-- AI 재수정: 수정 요청을 적고 누르면 AI 가 초안을 다시 쓴다 -->
+          <form id="reviseForm" class="reviseform">
+            <input id="reviseInput" class="field" type="text" placeholder="수정 요청 (예: 더 짧게, 광고 느낌 줄여줘)" autocomplete="off">
+            <button class="btn primary field" type="submit" id="reviseGo">AI 재수정</button>
+          </form>
+          <p id="reviseMsg" class="small muted"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ③ 댓글 달기: 프로필을 고르고 누르면 크롬이 열려 실제로 게시된다 -->
+    <section class="card" id="step3">
+      <h2><span class="num">3</span>댓글 달기</h2>
+      <div class="selected" id="selectedInfo">선택된 영상 없음</div>
+
+      <label class="label" for="profileSelect">크롬 프로필</label>
+      <select id="profileSelect"></select>
+
+      <button id="postBtn" class="btn danger wide" disabled>댓글 달기</button>
+      <p class="small muted">누르면 크롬 프로필이 열리고 실제로 게시됩니다.</p>
+
+      <!-- 진행 단계(프로필 여는 중 → ... → 확인 중)와 결과(성공 링크 / 실패 사유·캡처) -->
+      <ol id="progress" class="progress" aria-live="polite"></ol>
+      <div id="result" class="result" hidden></div>
+    </section>
+  </main>
+
+  <!-- 댓글 기록 모달: 어느 영상에 · 어느 프로필로 · 무슨 댓글을 · 성공/실패 -->
+  <dialog id="logDialog" aria-labelledby="logTitle">
+    <div class="dlg-head">
+      <h2 id="logTitle">댓글 기록</h2>
+      <button id="logClose" class="btn small" type="button">닫기</button>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>시각</th><th>영상</th><th>프로필</th><th>댓글</th><th>결과</th></tr></thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+    <p id="logEmpty" class="empty">아직 기록이 없습니다.</p>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

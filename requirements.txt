@@ -1,0 +1,14 @@
+# 웹 서버
+fastapi>=0.110
+uvicorn>=0.29
+# 유튜브 RSS·영상 페이지 요청
+httpx>=0.27
+# config/config.yaml 읽기
+pyyaml>=6.0
+# 크롬 프로필을 열어 댓글 게시
+playwright>=1.44
+# AI 호출 (Hugging Face InferenceClient)
+huggingface_hub>=0.30
+# AI 초안용 영상 정보: 자막, 인기 댓글
+youtube-transcript-api>=0.6
+youtube-comment-downloader>=0.1.76

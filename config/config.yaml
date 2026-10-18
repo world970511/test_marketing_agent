@@ -1,0 +1,31 @@
+# 프로그램 설정. 심사자 컴퓨터에 맞게 profiles 의 user_data_dir 만 고치면 됩니다.
+# (이 값들은 src/config.py 가 읽어 갑니다.)
+
+# 댓글을 달 때 열 크롬 프로필. name 은 화면의 드롭다운에 보이는 이름입니다.
+# user_data_dir 은 그 프로필의 폴더 경로입니다. 크롬에 경로만 전달하며, 이 프로그램은 폴더 안의 파일을 읽지 않습니다.
+profiles:
+  - { name: 유튜브1, user_data_dir: "~/ChromeProfiles/유튜브1" }
+  - { name: 유튜브2, user_data_dir: "~/ChromeProfiles/유튜브2" }
+  - { name: 유튜브3, user_data_dir: "~/ChromeProfiles/유튜브3" }
+
+# 불러오기 · 게시가 허용되는 채널(우리 채널 5개). 여기에 없는 채널의 영상에는 게시할 수 없습니다.
+channels:
+  - { id: UCxlc0Ky0aWoD8uI09ad44Tg, name: 외롭여 }
+  - { id: UC-ee_ziASM251TMXe3P3VZA, name: 리즈시절 LizTV }
+  - { id: UC09L3JxGVcn7SKLa-pjTEmw, name: 러브커넥트 유지연 }
+  - { id: UCVdtDW-HF4KluixGaBAcI4w, name: 연애데이터 노노 }
+  - { id: UCkGl2jieOVhGiHPdXF77Yyw, name: 심리조각 }
+
+# 개발 중 게시 테스트용 본인 영상 ID. 여기 적은 영상만 우리 채널이 아니어도 추가로 허용됩니다.
+test_videos: []            # 예: [AbCdEfGhIjK]  (영상 주소의 v= 뒤 11글자)
+
+videos_per_channel: 5      # 채널마다 불러올 최신 영상 수
+
+# 댓글 규칙: 글자 수 범위와, 댓글에 반드시 들어가야 하는 브랜드 이름
+comment: { min_chars: 40, max_chars: 120, brand: 운명원 }
+
+# 운영 한도: 하루에 게시할 수 있는 댓글 수
+limits: { daily_max_comments: 10 }
+
+# AI(Hugging Face InferenceClient). 토큰은 .env 의 HF_TOKEN 에 넣습니다.
+ai: { model: Qwen/Qwen3-235B-A22B-Instruct-2507, provider: auto }
